@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 /* ------------------------------------------------------------------ */
 /*  CONFIGURACIÓN – edita aquí                                         */
