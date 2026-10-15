@@ -3,8 +3,7 @@ import React, { useMemo, useState } from "react";
 /* ------------------------------------------------------------------ */
 /*  CONFIGURACIÓN – edita aquí                                         */
 /* ------------------------------------------------------------------ */
-const SHOP_URL = "https://althamirgt.com";
-const WHATSAPP_NUMBER = "50200000000"; // código de país + número, sin "+" ni espacios (Guatemala = 502)
+import { SHOP_URL, WHATSAPP_NUMBER, ADS_ENABLED } from "./config";
 const UTM = "?utm_source=fragrance-finder&utm_medium=quiz&utm_campaign=perfil-olfativo";
 
 const waLink = (text) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
@@ -198,6 +197,7 @@ function recommend(a) {
 /*  index.html.                                                        */
 /* ------------------------------------------------------------------ */
 function AdSlot({ className = "" }) {
+  if (!ADS_ENABLED) return null; // sin anuncios hasta que AdSense apruebe el sitio
   return (
     <aside
       aria-label="Espacio para anuncio"
@@ -245,7 +245,6 @@ export default function FragranceFinder() {
   return (
     <div className="min-h-screen bg-[#17110f] text-[#efe6d2] antialiased">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600&display=swap');
         .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
         .font-body { font-family: 'Manrope', system-ui, sans-serif; }
         @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

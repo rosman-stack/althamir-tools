@@ -3,8 +3,7 @@ import React, { useMemo, useState } from "react";
 /* ------------------------------------------------------------------ */
 /*  CONFIGURACIÓN – edita aquí                                         */
 /* ------------------------------------------------------------------ */
-const SHOP_URL = "https://althamirgt.com";
-const WHATSAPP_NUMBER = "50200000000"; // código de país + número, sin "+" ni espacios
+import { SHOP_URL, WHATSAPP_NUMBER, ADS_ENABLED } from "./config";
 const UTM = "?utm_source=calculadora-spray&utm_medium=app&utm_campaign=costo-por-spray";
 const SPRAYS_PER_ML = 10;
 
@@ -57,6 +56,7 @@ function compareMessage(daily, coffee, cur) {
 /*  ESPACIO PARA ANUNCIO (placeholder para Google AdSense)             */
 /* ------------------------------------------------------------------ */
 function AdSlot({ className = "" }) {
+  if (!ADS_ENABLED) return null; // sin anuncios hasta que AdSense apruebe el sitio
   return (
     <aside
       aria-label="Espacio para anuncio"
@@ -104,7 +104,6 @@ export default function CostCalculator() {
   return (
     <div className="min-h-screen bg-[#17110f] text-[#efe6d2] antialiased">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600&display=swap');
         .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
         .font-body { font-family: 'Manrope', system-ui, sans-serif; }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }

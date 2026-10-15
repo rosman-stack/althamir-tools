@@ -6,9 +6,7 @@ import React, { useState } from "react";
    Las fuentes (Cormorant Garamond y Manrope) se cargan abajo.
    ============================================================ */
 
-// ⚠️ Cambia por tu número real (código de país + número, sin + ni espacios)
-const WHATSAPP_NUMBER = "502XXXXXXXX";
-const SITE_URL = "https://althamirgt.com";
+import { SHOP_URL as SITE_URL, WHATSAPP_NUMBER, ADS_ENABLED } from "./config";
 
 /* ---------- Datos ---------- */
 
@@ -139,7 +137,6 @@ const COMBOS = {
 
 const GlobalStyles = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Manrope:wght@300;400;500;600;700&display=swap');
     .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
     .font-body { font-family: 'Manrope', system-ui, sans-serif; }
     @keyframes lh-merge {
@@ -163,6 +160,7 @@ const GlobalStyles = () => (
 /* ---------- Componentes pequeños ---------- */
 
 function AdSlot({ label = "Espacio publicitario" }) {
+  if (!ADS_ENABLED) return null; // sin anuncios hasta que AdSense apruebe el sitio
   return (
     <div
       className="w-full rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 text-center"
