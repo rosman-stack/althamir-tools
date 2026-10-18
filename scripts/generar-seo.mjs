@@ -3,6 +3,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buscarPaginas } from "./paginas.mjs";
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -23,19 +24,12 @@ if (!valido) {
   console.error(
     `\n✖ VITE_SITE_URL no es válida: "${sitio || "(vacía)"}".\n` +
       `  Ponla en el archivo .env (o como variable de entorno en tu hosting), con https y SIN diagonal final.\n` +
-      `  Ejemplo: VITE_SITE_URL=https://utilidades.althamirgt.com\n`
+      `  Ejemplo: VITE_SITE_URL=https://herramientas.althamirgt.com\n`
   );
   process.exit(1);
 }
 
-const paginas = [
-  "/",
-  "/costo-por-spray/",
-  "/test-de-perfumes/",
-  "/layering-de-perfumes/",
-  "/acerca/",
-  "/privacidad/",
-];
+const paginas = ["/", ...buscarPaginas(raiz).map((p) => `/${p}/`)];
 
 const sitemap =
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
@@ -49,4 +43,4 @@ const publico = resolve(raiz, "public");
 mkdirSync(publico, { recursive: true });
 writeFileSync(resolve(publico, "sitemap.xml"), sitemap);
 writeFileSync(resolve(publico, "robots.txt"), robots);
-console.log(`✔ sitemap.xml y robots.txt generados para ${sitio}`);
+console.log(`✔ sitemap.xml y robots.txt generados para ${sitio} (${paginas.length} páginas)`);

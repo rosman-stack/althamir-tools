@@ -1,23 +1,20 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+import { buscarPaginas } from "./scripts/paginas.mjs";
 
-const ruta = (p) => fileURLToPath(new URL(p, import.meta.url));
+const raiz = fileURLToPath(new URL(".", import.meta.url));
 
-// Sitio de varias páginas: cada herramienta tiene su propia URL y su propio HTML
-// (así Google puede indexarlas por separado).
+// Sitio de varias páginas: cada herramienta y cada guía tiene su propia URL y su
+// propio HTML (así Google puede indexarlas por separado). Las páginas se detectan
+// solas: cualquier carpeta con un index.html cuenta.
+const input = { inicio: resolve(raiz, "index.html") };
+for (const p of buscarPaginas(raiz)) {
+  input[p.replaceAll("/", "_")] = resolve(raiz, p, "index.html");
+}
+
 export default defineConfig({
   plugins: [react()],
-  build: {
-    rollupOptions: {
-      input: {
-        inicio: ruta("./index.html"),
-        costo: ruta("./costo-por-spray/index.html"),
-        test: ruta("./test-de-perfumes/index.html"),
-        layering: ruta("./layering-de-perfumes/index.html"),
-        acerca: ruta("./acerca/index.html"),
-        privacidad: ruta("./privacidad/index.html"),
-      },
-    },
-  },
+  build: { rollupOptions: { input } },
 });
