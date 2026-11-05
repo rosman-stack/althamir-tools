@@ -19,12 +19,21 @@ const raiz = fileURLToPath(new URL(".", import.meta.url));
 // - En Europa, Reino Unido y Suiza queda apagado hasta que acepte.
 // - Si algún día quieres que sea "solo con permiso" en TODO el mundo, cambia el segundo
 //   gtag("consent","default") de analytics_storage: "granted" a "denied".
-// - Cuando AdSense esté aprobado, pon PUBLICIDAD = true para que "Aceptar" también
-//   conceda las cookies de anuncios (y actualiza la política de privacidad).
-const PUBLICIDAD = false;
-const extraAnuncios = PUBLICIDAD ? ", ad_storage: est, ad_user_data: est, ad_personalization: est" : "";
+//
+// GOOGLE ADSENSE: todo se activa con UNA sola variable. Cuando AdSense te dé tu ID de editor (al
+// crear la cuenta y agregar el sitio, ANTES de pedir la revisión), ponlo en VITE_ADSENSE_ID
+// (ca-pub-0000000000000000) en el .env (o en las variables del hosting) y haz el deploy. Al compilar:
+// - se inserta el código de AdSense y la etiqueta google-adsense-account en todas las páginas
+//   (después de la configuración de consentimiento, nunca antes);
+// - se genera public/ads.txt con tu ID;
+// - el aviso de cookies menciona los anuncios y "Aceptar" también concede las cookies de
+//   anuncios (ad_storage, ad_user_data, ad_personalization); "Rechazar" deja anuncios sin personalizar.
+// Si la variable está vacía, el sitio queda exactamente igual que hoy (sin anuncios).
+// Requiere VITE_GA_ID válido: el consentimiento se configura en el mismo bloque que Analytics.
+const ID_ADSENSE = /^ca-pub-\d{16}$/;
+const EXTRA_ANUNCIOS = ", ad_storage: est, ad_user_data: est, ad_personalization: est";
 
-const bannerCookies = () => String.raw`
+const bannerCookies = (anuncios) => String.raw`
     <!-- Aviso de cookies -->
     <style>
       #alt-ck{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2147483000;max-width:640px;margin:0 auto;background:#211916;color:#efe6d2;border:1px solid #3a2e29;border-radius:16px;padding:16px;box-shadow:0 10px 40px rgba(0,0,0,.5);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -41,9 +50,9 @@ const bannerCookies = () => String.raw`
         var KEY = "althamir_cookies", DIAS = 365;
         var en = (document.documentElement.lang || "").toLowerCase().indexOf("en") === 0;
         var T = en
-          ? { t: "We use cookies to measure, in aggregate, how many people visit this site so we can improve our guides and tools. You can accept or reject them.",
+          ? { t: "${anuncios ? "We use cookies to measure, in aggregate, how many people visit this site and, if you accept, to show ads that Google may personalize. If you reject, you will still see ads, but not personalized ones. You can change this at any time." : "We use cookies to measure, in aggregate, how many people visit this site so we can improve our guides and tools. You can accept or reject them."}",
               ok: "Accept", no: "Reject", pol: "Privacy policy", href: "/en/privacy/", lbl: "Cookie notice", pie: "Cookie settings" }
-          : { t: "Usamos cookies para medir, de forma agregada, cuántas personas visitan este sitio y así mejorar las guías y herramientas. Puedes aceptarlas o rechazarlas.",
+          : { t: "${anuncios ? "Usamos cookies para medir, de forma agregada, cuántas personas visitan este sitio y, si las aceptas, para mostrar anuncios que Google puede personalizar. Si las rechazas, verás anuncios igualmente, pero no personalizados. Puedes cambiarlo cuando quieras." : "Usamos cookies para medir, de forma agregada, cuántas personas visitan este sitio y así mejorar las guías y herramientas. Puedes aceptarlas o rechazarlas."}",
               ok: "Aceptar", no: "Rechazar", pol: "Política de privacidad", href: "/privacidad/", lbl: "Aviso de cookies", pie: "Cookies" };
         function leer() {
           try {
@@ -68,7 +77,7 @@ const bannerCookies = () => String.raw`
         }
         function aplicar(ok) {
           var est = ok ? "granted" : "denied";
-          if (window.gtag) gtag("consent", "update", { analytics_storage: est${extraAnuncios} });
+          if (window.gtag) gtag("consent", "update", { analytics_storage: est${anuncios ? EXTRA_ANUNCIOS : ""} });
           if (!ok) borrar();
         }
         function cerrar() { var b = document.getElementById("alt-ck"); if (b) b.parentNode.removeChild(b); }
@@ -102,7 +111,8 @@ const bannerCookies = () => String.raw`
     </script>
   `;
 
-function analitica(gaId) {
+function analitica(gaId, adsId) {
+  const anuncios = ID_ADSENSE.test(adsId || "");
   const valido = /^G-[A-Z0-9]{6,}$/.test(gaId || "");
   const snippet = (id) => String.raw`
     <!-- Google Analytics 4 -->
@@ -123,7 +133,7 @@ function analitica(gaId) {
         var cc = JSON.parse(localStorage.getItem("althamir_cookies") || "null");
         if (cc && cc.v === 1 && Date.now() - cc.t < 31536000000) {
           var est = cc.a ? "granted" : "denied";
-          gtag("consent", "update", { analytics_storage: est${extraAnuncios} });
+          gtag("consent", "update", { analytics_storage: est${anuncios ? EXTRA_ANUNCIOS : ""} });
         }
       } catch (_) {}
       gtag("js", new Date());
@@ -147,12 +157,28 @@ function analitica(gaId) {
       order: "post",
       handler(html, ctx) {
         if (!valido || !ctx.bundle) return html; // nada en desarrollo ni sin ID
-        return html.replace("</head>", snippet(gaId) + "</head>").replace("</body>", bannerCookies() + "</body>");
+        return html.replace("</head>", snippet(gaId) + "</head>").replace("</body>", bannerCookies(anuncios) + "</body>");
       },
     },
   };
 }
 
+function adsense(adsId) {
+  return {
+    name: "althamir-adsense",
+    transformIndexHtml: {
+      order: "post", // después de analitica(): el consentimiento ya quedó configurado arriba
+      handler(html, ctx) {
+        if (!adsId || !ctx.bundle) return html; // nada en desarrollo ni sin ID
+        const bloque =
+          `\n    <!-- Google AdSense -->\n` +
+          `    <meta name="google-adsense-account" content="${adsId}" />\n` +
+          `    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsId}" crossorigin="anonymous"></script>\n  `;
+        return html.replace("</head>", bloque + "</head>");
+      },
+    },
+  };
+}
 
 // Sitio de varias páginas: cada herramienta y cada guía tiene su propia URL y su
 // propio HTML (así Google puede indexarlas por separado). Las páginas se detectan
@@ -164,8 +190,13 @@ for (const p of buscarPaginas(raiz)) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, raiz, "VITE_");
+  const gaOk = /^G-[A-Z0-9]{6,}$/.test(env.VITE_GA_ID || "");
+  const adsOk = ID_ADSENSE.test((env.VITE_ADSENSE_ID || "").trim());
+  if (env.VITE_ADSENSE_ID && !adsOk) console.warn(`\n⚠ VITE_ADSENSE_ID no es válido ("${env.VITE_ADSENSE_ID}"): debe verse como ca-pub-0000000000000000. AdSense NO se activó.\n`);
+  if (adsOk && !gaOk) console.warn("\n⚠ VITE_ADSENSE_ID ignorado: necesita VITE_GA_ID válido para configurar el consentimiento. AdSense NO se activó.\n");
+  const adsId = adsOk && gaOk ? env.VITE_ADSENSE_ID.trim() : "";
   return {
-    plugins: [react(), analitica(env.VITE_GA_ID)],
+    plugins: [react(), analitica(env.VITE_GA_ID, adsId), adsense(adsId)],
     build: { rollupOptions: { input } },
   };
 });

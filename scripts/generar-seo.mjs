@@ -1,24 +1,26 @@
 // Se ejecuta solo antes de `npm run build` (script "prebuild").
-// Genera public/sitemap.xml y public/robots.txt con la dirección real del sitio.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// Genera public/sitemap.xml y public/robots.txt con la dirección real del sitio y,
+// si VITE_ADSENSE_ID está definido, public/ads.txt.
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buscarPaginas } from "./paginas.mjs";
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-function leerSitio() {
-  if (process.env.VITE_SITE_URL) return process.env.VITE_SITE_URL.trim();
+function leerVar(nombre) {
+  if (process.env[nombre]) return process.env[nombre].trim();
+  if (nombre !== "VITE_SITE_URL" && nombre in process.env) return ""; // variable definida pero vacía: manda sobre el .env (igual que en Vite)
   const archivo = resolve(raiz, ".env");
   if (!existsSync(archivo)) return "";
   for (const linea of readFileSync(archivo, "utf8").split(/\r?\n/)) {
-    const m = linea.match(/^\s*VITE_SITE_URL\s*=\s*(.+?)\s*$/);
+    const m = linea.match(new RegExp(`^\\s*${nombre}\\s*=\\s*(.*?)\\s*$`));
     if (m) return m[1].replace(/^["']|["']$/g, "");
   }
   return "";
 }
 
-const sitio = leerSitio();
+const sitio = leerVar("VITE_SITE_URL");
 const valido = /^https:\/\/[^\s/]+(\/[^\s]*[^\s/])?$/.test(sitio) && !/CAMBIA/i.test(sitio);
 if (!valido) {
   console.error(
@@ -44,3 +46,14 @@ mkdirSync(publico, { recursive: true });
 writeFileSync(resolve(publico, "sitemap.xml"), sitemap);
 writeFileSync(resolve(publico, "robots.txt"), robots);
 console.log(`✔ sitemap.xml y robots.txt generados para ${sitio} (${paginas.length} páginas)`);
+
+// ads.txt: solo si hay un ID de AdSense válido (ca-pub-XXXXXXXXXXXXXXXX) y Analytics configurado
+// (las mismas condiciones que activan los anuncios). Si no, se borra el anterior.
+const adsId = leerVar("VITE_ADSENSE_ID");
+const archivoAds = resolve(publico, "ads.txt");
+if (/^ca-pub-\d{16}$/.test(adsId) && /^G-[A-Z0-9]{6,}$/.test(leerVar("VITE_GA_ID"))) {
+  writeFileSync(archivoAds, `google.com, ${adsId.replace("ca-", "")}, DIRECT, f08c47fec0942fa0\n`);
+  console.log(`✔ ads.txt generado (${adsId.replace("ca-", "")})`);
+} else if (existsSync(archivoAds)) {
+  rmSync(archivoAds);
+}
