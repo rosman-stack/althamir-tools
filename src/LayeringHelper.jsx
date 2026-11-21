@@ -294,7 +294,7 @@ export default function LayeringHelper() {
   };
 
   const utm = (content) =>
-    `${SITE_URL}/?utm_source=layering_helper&utm_medium=miniapp&utm_campaign=kit_decants_layering&utm_content=${content}`;
+    `${SITE_URL}/?utm_source=layering_helper&utm_medium=referral&utm_term=miniapp&utm_campaign=kit_decants_layering&utm_content=${content}`;
 
   const shopUrl = base && comp ? utm(`${base.id}-${comp.id}`) : SITE_URL;
 

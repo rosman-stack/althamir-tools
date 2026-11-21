@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 /*  CONFIGURACIÓN – edita aquí                                         */
 /* ------------------------------------------------------------------ */
 import { SHOP_URL, WHATSAPP_NUMBER, ADS_ENABLED } from "./config";
-const UTM = "?utm_source=fragrance-finder&utm_medium=quiz&utm_campaign=perfil-olfativo";
+const UTM = "?utm_source=fragrance-finder&utm_medium=referral&utm_term=quiz&utm_campaign=perfil-olfativo";
 
 const waLink = (text) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 

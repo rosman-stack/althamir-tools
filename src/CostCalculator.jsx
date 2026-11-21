@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 /*  CONFIGURACIÓN – edita aquí                                         */
 /* ------------------------------------------------------------------ */
 import { SHOP_URL, WHATSAPP_NUMBER, ADS_ENABLED } from "./config";
-const UTM = "?utm_source=calculadora-spray&utm_medium=app&utm_campaign=costo-por-spray";
+const UTM = "?utm_source=calculadora-spray&utm_medium=referral&utm_term=app&utm_campaign=costo-por-spray";
 const SPRAYS_PER_ML = 10;
 
 const SIZES = [
